@@ -8,13 +8,41 @@ Replace Firefox's default control mechanism with one modelled on the one true ed
 
 ## Installing
 
-[Simply click this link in Firefox to install our latest "beta" build][riskyclick]. These [betas][betas] are updated with each commit to master on this repo. Your browser will automatically update from there once a day. If you want more frequent updates, you can change `extensions.update.interval` in `about:config` to whatever time you want, say, 15 minutes (900 seconds). Alternatively, you can get our "stable" builds straight from [Mozilla][amo]. The changelog for the stable versions can be found [here](https://github.com/tridactyl/tridactyl/blob/master/CHANGELOG.md). There is also another beta build that comes without a new tab page. You can get it from [here][nonewtablink]. If you want to use advanced features such as edit-in-Vim, you'll also need to install the native messenger or executable, instructions for which can be found by typing `:installnative` and hitting enter once you are in Tridactyl. To migrate your configuration across builds, see [this comment][migratelink] or [this issue](https://github.com/tridactyl/tridactyl/issues/1353#issuecomment-463094704).
+[Simply click this link in Firefox to install our latest "beta" build][riskyclick]. If you want more options, read on.
+
+### Stable
+
+Our "stable" builds are essentially just frozen versions of our beta builds. Our beta builds themselves are not much less stable; all our developers and about half of our users use the beta builds. Stable builds, however, do get new features documented in the changelog, whereas beta builds get new features before they are documented there.
+
+#### Arch Linux
+
+Run `pacman -S firefox-tridactyl` in a terminal and then restart Firefox _twice_.
+
+#### All other operating systems (Microsoft Windows, Macintosh, Linux etc.)
+
+Tridactyl stable can be installed from the [Mozilla add-ons website (the AMO)][amo].
+
+### Beta
+
+[Click this in Firefox to install our "beta" builds][riskyclick]. These [betas][betas] are updated with each commit to master on this repo. Your browser will automatically update from there once a day. If you want more frequent updates, you can change `extensions.update.interval` in `about:config` to whatever time you want, say, 15 minutes (900 seconds). There is also another beta build that comes without a new tab page. You can get it from [here][nonewtablink].
+
+### Extra features
+
+If you want to use advanced features such as edit-in-Vim, you'll also need to install the native messenger or executable, instructions for which can be found by typing `:installnative` and hitting enter once you are in Tridactyl. Arch users can install the [AUR package](https://aur.archlinux.org/packages/firefox-tridactyl-native/) `firefox-tridactyl-native` instead.
+
+## Migrating between beta and stable builds
+
+Our beta and stable versions store their configurations in separate places. To migrate between the two, see [this comment][migratelink] or [this issue](https://github.com/tridactyl/tridactyl/issues/1353#issuecomment-463094704).
+
+## Changelog
+
+The changelog for the stable versions can be found [here](https://github.com/tridactyl/tridactyl/blob/master/CHANGELOG.md).
+
+## First look
 
 Type `:help` or press `<F1>` for online help once you're in :)
 
 Remember that Tridactyl cannot run on any page on about:\*, data:\*, view-source:\* and file:\*. We're sorry about that and we're working with Firefox to improve this situation by removing restrictions on existing APIs and developing a new API.
-
-We can now run on addons.mozilla.org and a few other websites if you run `fixamo` once you've installed the native messenger. `help fixamo` tells you exactly what it does.
 
 If you're enjoying Tridactyl, or not, please leave a review on the [AMO](https://addons.mozilla.org/en-US/firefox/addon/tridactyl-vim/reviews/).
 
@@ -86,6 +114,7 @@ If you want to use Firefox's default `<C-b>` binding to open the bookmarks sideb
 -   `u` — undo the last tab/window closure
 -   `gt`/`gT` — go to the next/previous tab
 -   `g^`/`g$` — go to the first/last tab
+-   `<C-^>` — go to the last active tab
 -   `b` — bring up a list of open tabs in the current window; you can type the tab ID or part of the title or URL to choose a tab
 
 #### Extended hint mode
@@ -116,11 +145,7 @@ You can bind your own shortcuts in normal mode with the `:bind` command. For exa
     -   addons.mozilla.org is now supported so long as you run `fixamo` first.
 -   Tridactyl now supports changing the Firefox GUI if you have the native messenger installed via `guiset`. There's quite a few options available, but `guiset gui none` is probably what you want, perhaps followed up with `guiset tabs always`. See `:help guiset` for a list of all possible options.
 
-## Frequently asked questions
-
--   Why doesn't Tridactyl respect my search engine settings?
-
-    It used to be a webextension limitation but it's not anymore. There are plans to fix this, see [#792](https://github.com/tridactyl/tridactyl/issues/792).
+## Frequently asked questions (FAQ)
 
 -   Why doesn't Tridactyl work/why does it break the websites I'm trying to use? or 'Help! A website I use is totally blank when I try to use it with Tridactyl enabled!' or 'Why doesn't Tridactyl work on some pages?'
 
@@ -142,9 +167,9 @@ You can bind your own shortcuts in normal mode with the `:bind` command. For exa
 
 -   Can I import/export settings, and does Tridactyl use an external configuration file just like Vimperator?
 
-    Yes, if you have `native` working, `$XDG_CONFIG_DIR/tridactyl/tridactylrc` or `~/.tridactylrc` will be read at startup via an `autocmd` and `source`. There is an [example file available on our repository](https://github.com/tridactyl/tridactyl/blob/master/.tridactylrc).
+    Yes. `:source --url [URL]` accepts a URL (which must contain only an RC file, e.g. `raw.githubusercontent.com/...`). If you have `native` working, `$XDG_CONFIG_DIR/tridactyl/tridactylrc` or `~/.tridactylrc` will be read at startup via an `autocmd` and `source`. There is an [example file available on our repository](https://github.com/tridactyl/tridactyl/blob/master/.tridactylrc).
 
-    If you can't use the native messenger for some reason, there is a workaround: if you do `set storageloc local`, a JSON file will appear at `<your firefox profile>\browser-extension-data\tridactyl.vim@cmcaine.co.uk\storage.js`. You can find your profile folder by going to `about:support`. You can edit this file to your heart's content.
+    There's also `mkt` which exports your configuration to a file which may be read with `source`. (NB: this currently requires `native`).
 
 -   How can I change the colors or theme used by Tridactyl?
 
@@ -160,9 +185,7 @@ You can bind your own shortcuts in normal mode with the `:bind` command. For exa
 
     If you want to bind <C-^> you'll find that you'll probably need to press Control+Shift+6 to trigger it. The default bind is <C-6> which does not require you to press shift.
 
--   How can I tab complete from bookmarks?
-
-    `bmarks`. Bookmarks are not currently supported on `*open`: see [issue #214](https://github.com/tridactyl/tridactyl/issues/214).
+    You can also create site specific binds with `bindurl [url] ...`
 
 -   When I type 'f', can I type link names (like Vimperator) in order to narrow down the number of highlighted links?
 
@@ -202,7 +225,7 @@ You can bind your own shortcuts in normal mode with the `:bind` command. For exa
 
 -   Does anyone actually use Tridactyl?
 
-    In addition to the developers, some other people do. Mozilla keeps tabs on stable users [here](https://addons.mozilla.org/en-US/firefox/addon/tridactyl-vim/statistics/?last=30). The maintainers guess the number of unstable users from unique IPs downloading the betas each week when they feel like it. Last time they checked there were 3000 of them.
+    In addition to the developers, some other people do. Mozilla keeps tabs on stable users [here](https://addons.mozilla.org/en-US/firefox/addon/tridactyl-vim/statistics/?last=30). The maintainers guess the number of unstable users from unique IPs downloading the betas each week when they feel like it. Last time they checked there were 4600 of them.
 
 -   How do I prevent websites from stealing focus?
 
@@ -212,7 +235,7 @@ You can bind your own shortcuts in normal mode with the `:bind` command. For exa
 
 ### Donations
 
-We gratefully accept donations via [PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7JQHV4N2YZCTY) and [Patreon](https://www.patreon.com/tridactyl). If you can, please make this a monthly donation as it makes it much easier to plan.
+We gratefully accept donations via [GitHub Sponsors](https://github.com/users/bovine3dom/sponsorship) (who will double any donations until October 2020), [PayPal](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7JQHV4N2YZCTY) and [Patreon](https://www.patreon.com/tridactyl). If you can, please make this a monthly donation as it makes it much easier to plan.
 
 <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7JQHV4N2YZCTY"><img src="https://www.paypalobjects.com/en_US/GB/i/btn/btn_donateCC_LG.gif" alt="PayPal"></a>
 
@@ -249,6 +272,10 @@ yarn run build
 ```
 
 If you want to build a signed copy (e.g. for the non-developer release), you can do that with `web-ext sign`. You'll need some keys for AMO and to edit the application id in `src/manifest.json`. There's a helper script in `scripts/sign` that's used by our build bot and for manual releases.
+
+You can build unsigned copies with `scripts/sign nosign{stable,beta}`. NB: The `stable` versus `beta` part of the argument tells our build process which extension ID to use (and therefore which settings to use). If you want a stable build, make sure you are on the latest tag, i.e. `git checkout $(git tag | grep '^[0-9]\+\.[0-9]\+\.[0-9]\+$' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)`.
+
+If you are on a distribution which builds Firefox with `--with-unsigned-addon-scopes=` set to `app` and/or `system` (which is most of them by users: Arch, Debian, Ubuntu), you can install your unsigned copy of Tridactyl with `scripts/install.sh [directory]`. If you're on Arch, the correct directory is probably selected by default; on other distributions you might have to go hunting, but it probably looks like `/usr/lib/firefox/browser/extensions`.
 
 ### Building on Windows
 

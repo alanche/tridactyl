@@ -11,6 +11,8 @@
 
     Ex-commands available exclusively in hint mode are listed [here](/static/docs/modules/_src_content_hinting_.html)
 
+    We also have a [wiki](https://github.com/tridactyl/tridactyl/wiki) which may be edited by anyone.
+
     ## How to use this help page
 
     Every function (excmd) on this page can be called via Tridactyl's command line which we call "ex". There is a slight change in syntax, however. Wherever you see:
@@ -90,10 +92,10 @@ import * as excmd_parser from "@src/parsers/exmode"
 import * as escape from "@src/lib/escape"
 
 /**
-  * This is used to drive some excmd handling in `composite`.
-  *
-  * @hidden
-  */
+ * This is used to drive some excmd handling in `composite`.
+ *
+ * @hidden
+ */
 let ALL_EXCMDS
 
 // The entry-point script will make sure this has the right set of
@@ -135,8 +137,8 @@ import * as gobbleMode from "@src/parsers/gobblemode"
 
 ALL_EXCMDS = {
     "": CTSELF,
-    "ex": CtCmdlineCmds,
-    "text": CtEditorCmds,
+    ex: CtCmdlineCmds,
+    text: CtEditorCmds,
 }
 // }
 
@@ -153,16 +155,16 @@ import { CmdlineCmds as BgCmdlineCmds } from "@src/background/commandline_cmds"
 import { EditorCmds as BgEditorCmds } from "@src/background/editor"
 import { messageActiveTab } from "@src/lib/messaging"
 import { EditorCmds } from "@src/background/editor"
-import { flatten } from "@src/lib/itertools"
 import { firefoxVersionAtLeast } from "@src/lib/webext"
 import * as rc from "@src/background/config_rc"
 import * as css_util from "@src/lib/css_util"
 import * as Updates from "@src/lib/updates"
+import * as Extensions from "@src/lib/extension_info"
 
 ALL_EXCMDS = {
     "": BGSELF,
-    "ex": BgCmdlineCmds,
-    "text": BgEditorCmds,
+    ex: BgCmdlineCmds,
+    text: BgEditorCmds,
 }
 /** @hidden */
 // }
@@ -253,7 +255,7 @@ export async function fillinput(selector: string, ...content: string[]) {
     let inputToFill = document.querySelector(selector)
     if (!inputToFill) inputToFill = DOM.getLastUsedInput()
     if ("value" in inputToFill) {
-        (inputToFill as HTMLInputElement).value = content.join(" ")
+        ; (inputToFill as HTMLInputElement).value = content.join(" ")
     } else {
         inputToFill.textContent = content.join(" ")
     }
@@ -332,7 +334,7 @@ export async function editor() {
         let line = 0
         let col = 0
         wrap_input((t, start, end) => {
-            [text, line, col] = getLineAndColNumber(t, start, end)
+            ; [text, line, col] = getLineAndColNumber(t, start, end)
             return [null, null, null]
         })(elem)
         const file = (await Native.temp(text, document.location.hostname)).content
@@ -358,7 +360,7 @@ export async function editor() {
 //#background
 export async function guiset_quiet(rule: string, option: string) {
     if (!rule || !option) throw new Error(":guiset requires two arguments. See `:help guiset` for more information.")
-    if ((rule == "navbar") && (option == "none")) throw new Error("`:guiset navbar none` is currently broken, see https://github.com/tridactyl/tridactyl/issues/1728")
+    if (rule == "navbar" && option == "none") throw new Error("`:guiset navbar none` is currently broken, see https://github.com/tridactyl/tridactyl/issues/1728")
     // Could potentially fall back to sending minimal example to clipboard if native not installed
 
     // Check for native messenger and make sure we have a plausible profile directory
@@ -368,13 +370,12 @@ export async function guiset_quiet(rule: string, option: string) {
 
     // Make backups
     await Native.mkdir(profile_dir + "/chrome", true)
-    let cssstr = (await Native.read(profile_dir + "/chrome/userChrome.css")).content
+    const cssstr = (await Native.read(profile_dir + "/chrome/userChrome.css")).content
     const cssstrOrig = (await Native.read(profile_dir + "/chrome/userChrome.orig.css")).content
     if (cssstrOrig === "") await Native.write(profile_dir + "/chrome/userChrome.orig.css", cssstr)
     await Native.write(profile_dir + "/chrome/userChrome.css.tri.bak", cssstr)
 
     // Modify and write new CSS
-    if (cssstr === "") cssstr = `@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");`
     const stylesheet = CSS.parse(cssstr)
     // Trim due to https://github.com/reworkcss/css/issues/113
     const stylesheetDone = CSS.stringify(css_util.changeCss(rule, option, stylesheet)).trim()
@@ -439,7 +440,7 @@ export function cssparse(...css: string[]) {
 //#background
 export async function loadtheme(themename: string) {
     if (!(await Native.nativegate("0.1.9"))) return
-    const separator = (await browserBg.runtime.getPlatformInfo().os) === "win" ? "\\" : "/"
+    const separator = (await browserBg.runtime.getPlatformInfo()).os === "win" ? "\\" : "/"
     // remove the "tridactylrc" bit so that we're left with the directory
     const path =
         (await Native.getrcpath())
@@ -491,11 +492,21 @@ export async function colourscheme(themename: string) {
  * Note that not all of the keys Firefox uses are suggested by Tridactyl.
  *
  * e.g.: `setpref general.warnOnAboutConfig false`
- * `setpref extensions.webextensions.restricterDomains ""`
  */
 //#background
 export function setpref(key: string, ...value: string[]) {
     return Native.writePref(key, value.join(" "))
+}
+
+/**
+ * Remove a setting from your user.js file.
+ *
+ * @param key The key that should be set. Must not be quoted. Must not contain spaces.
+ *
+ */
+//#background
+export function removepref(key: string) {
+    return Native.removePref(key)
 }
 
 /**
@@ -714,27 +725,40 @@ export async function mktridactylrc(...args: string[]) {
     const file = argParse(args).join(" ") || undefined
 
     const conf = config.parseConfig()
-    if (await Native.nativegate("0.1.11") && (!await rc.writeRc(conf, overwrite, file))) logger.error("Could not write RC file")
+    if ((await Native.nativegate("0.1.11")) && !(await rc.writeRc(conf, overwrite, file))) logger.error("Could not write RC file")
 
     return conf
 }
 
 /**
- * Runs an RC file from disk.
+ * Runs an RC file from disk or a URL
+ *
+ * This function accepts a flag: `--url` to load a RC from a URL.
  *
  * If no argument given, it will try to open ~/.tridactylrc, ~/.config/tridactyl/tridactylrc or $XDG_CONFIG_HOME/tridactyl/tridactylrc in reverse order. You may use a `_` in place of a leading `.` if you wish, e.g, if you use Windows.
+ *
+ * If no url is specified with the `--url` flag, the current page's URL is used to locate the RC file. Ensure the URL you pass (or page you are on) is a "raw" RC file, e.g. https://raw.githubusercontent.com/tridactyl/tridactyl/master/.tridactylrc and not https://github.com/tridactyl/tridactyl/blob/master/.tridactylrc.
+ *
+ * Tridactyl won't run on many raw pages due to a Firefox bug with Content Security Policy, so you may need to use the `source --url [URL]` form.
  *
  * On Windows, the `~` expands to `%USERPROFILE%`.
  *
  * The RC file is just a bunch of Tridactyl excmds (i.e, the stuff on this help page). Settings persist in local storage; add `sanitise tridactyllocal tridactylsync` to make it more Vim like. There's an [example file](https://raw.githubusercontent.com/cmcaine/tridactyl/master/.tridactylrc) if you want it.
  *
- * @param fileArr the file to open. Must be an absolute path, but can contain environment variables and things like ~.
+ * @param args the file/URL to open. For files: must be an absolute path, but can contain environment variables and things like ~.
  */
 //#background
-export async function source(...fileArr: string[]) {
-    const file = fileArr.join(" ") || undefined
-    if ((await Native.nativegate("0.1.3")) && !(await rc.source(file))) {
-        logger.error("Could not find RC file")
+export async function source(...args: string[]) {
+    if (args[0] === "--url") {
+        let url = args[1]
+        if (!url || url === "%") url = window.location.href
+        if (!(url.startsWith("http://") || url.startsWith("https://"))) url = "http://" + url
+        await rc.sourceFromUrl(url)
+    } else {
+        const file = args.join(" ") || undefined
+        if ((await Native.nativegate("0.1.3")) && !(await rc.source(file))) {
+            logger.error("Could not find RC file")
+        }
     }
 }
 
@@ -742,10 +766,17 @@ export async function source(...fileArr: string[]) {
  * Same as [[source]] but suppresses all errors
  */
 //#background
-export async function source_quiet(...fileArr: string[]) {
+export async function source_quiet(...args: string[]) {
     try {
-        const file = fileArr.join(" ") || undefined
-        if (await Native.nativegate("0.1.3", false)) rc.source(file)
+        if (args[0] === "--url") {
+            let url = args[1]
+            if (!url || url === "%") url = window.location.href
+            if (!(url.startsWith("http://") || url.startsWith("https://"))) url = "http://" + url
+            await rc.sourceFromUrl(url)
+        } else {
+            const file = args.join(" ") || undefined
+            if (await Native.nativegate("0.1.3", false)) rc.source(file)
+        }
     } catch (e) {
         logger.info("Automatic loading of RC file failed.")
     }
@@ -817,9 +848,9 @@ export async function restart() {
 //#content
 export async function saveas(...filename: string[]) {
     if (filename.length > 0) {
-        return Messaging.message("download_background", "downloadUrlAs", [window.location.href, filename.join(" ")])
+        return Messaging.message("download_background", "downloadUrlAs", window.location.href, filename.join(" "))
     } else {
-        return Messaging.message("download_background", "downloadUrl", [window.location.href, true])
+        return Messaging.message("download_background", "downloadUrl", window.location.href, true)
     }
 }
 
@@ -838,6 +869,10 @@ function tabSetActive(id: number) {
 /** @hidden */
 //#content_helper
 let JUMPED: boolean
+
+/** @hidden */
+//#content_helper
+let JUMP_TIMEOUTID: number | undefined
 
 /** This is used as an ID for the current page in the jumplist.
     It has a potentially confusing behavior: if you visit site A, then site B, then visit site A again, the jumplist that was created for your first visit on A will be re-used for your second visit.
@@ -870,8 +905,7 @@ export async function curJumps() {
     }
     const page = getJumpPageId()
     ensure(jumps, page, {})
-    const dummy = new UIEvent("scroll")
-    ensure(jumps[page], "list", [{ x: dummy.pageX, y: dummy.pageY }])
+    ensure(jumps[page], "list", [{ x: window.scrollX, y: window.scrollY }])
     ensure(jumps[page], "cur", 0)
     saveJumps(jumps)
     return jumps
@@ -921,35 +955,37 @@ export function jumpprev(n = 1) {
     @hidden
 */
 //#content_helper
-export function addJump(scrollEvent: UIEvent) {
+export function addJump() {
     if (JUMPED) {
         JUMPED = false
         return
     }
-    const pageX = scrollEvent.pageX
-    const pageY = scrollEvent.pageY
-    // Get config for current page
-    curJumps().then(alljumps => {
+    const {scrollX, scrollY} = window
+    // Prevent pending jump from being registered
+    clearTimeout(JUMP_TIMEOUTID)
+    // Schedule the registering of the current jump
+    const localTimeoutID = setTimeout(async () => {
+        // Get config for current page
+        const alljumps = await curJumps()
+        // if this handler was cancelled after the call to curJumps(), bail out
+        if (localTimeoutID !== JUMP_TIMEOUTID) return
+
         const jumps = alljumps[getJumpPageId()]
-        // Prevent pending jump from being registered
-        clearTimeout(jumps.timeoutid)
-        // Schedule the registering of the current jump
-        jumps.timeoutid = setTimeout(() => {
-            const list = jumps.list
-            // if the page hasn't moved, stop
-            if (list[jumps.cur].x === pageX && list[jumps.cur].y === pageY) return
-            // Store the new jump
-            // Could removing all jumps from list[cur] to list[list.length] be
-            // a better/more intuitive behavior?
-            list.push({ x: pageX, y: pageY })
-            jumps.cur = jumps.list.length - 1
-            saveJumps(alljumps)
-        }, config.get("jumpdelay"))
-    })
+        const list = jumps.list
+        // if the page hasn't moved, stop
+        if (list[jumps.cur].x === scrollX && list[jumps.cur].y === scrollY) return
+        // Store the new jump
+        // Could removing all jumps from list[cur] to list[list.length] be
+        // a better/more intuitive behavior?
+        list.push({ x: scrollX, y: scrollY })
+        jumps.cur = jumps.list.length - 1
+        saveJumps(alljumps)
+    }, config.get("jumpdelay"))
+    JUMP_TIMEOUTID = localTimeoutID
 }
 
 //#content_helper
-document.addEventListener("scroll", addJump)
+document.addEventListener("scroll", addJump, {passive: true})
 
 // Try to restore the previous jump position every time a page is loaded
 //#content_helper
@@ -958,7 +994,7 @@ document.addEventListener("load", () => curJumps().then(() => jumpprev(0)))
 /** Blur (unfocus) the active element */
 //#content
 export function unfocus() {
-    (document.activeElement as HTMLInputElement).blur()
+    document.activeElement.shadowRoot ? (document.activeElement.shadowRoot.activeElement as HTMLInputElement).blur() : (document.activeElement as HTMLInputElement).blur()
     contentState.mode = "normal"
 }
 
@@ -1014,7 +1050,8 @@ let lineHeight = null
  *  The height of a line is defined by the site's CSS. If Tridactyl can't get it, it'll default to 22 pixels.
  */
 //#content
-export function scrollline(n = 1) {
+export function scrollline(n = 1, mult = 1) {
+    n = mult * n
     if (lineHeight === null) {
         const getLineHeight = elem => {
             // Get line height
@@ -1156,15 +1193,14 @@ export const ABOUT_WHITELIST = ["about:license", "about:logo", "about:rights", "
 //#content
 export async function open(...urlarr: string[]) {
     const url = urlarr.join(" ")
-    let p = Promise.resolve()
 
     // Setting window.location to about:blank results in a page we can't access, tabs.update works.
     if (!ABOUT_WHITELIST.includes(url) && url.match(/^(about|file):.*/)) {
         // Open URLs that firefox won't let us by running `firefox <URL>` on the command line
-        p = nativeopen(url)
+        return nativeopen(url)
     } else if (url.match(/^javascript:/)) {
         const bookmarklet = url.replace(/^javascript:/, "")
-        ; (document.body as any).append(
+        document.body.append(
             html`
                 <script>
                     ${bookmarklet}
@@ -1172,10 +1208,9 @@ export async function open(...urlarr: string[]) {
             `,
         )
     } else {
-        p = activeTab().then(tab => openInTab(tab, {}, urlarr))
+        const tab = await activeTab()
+        return openInTab(tab, {}, urlarr)
     }
-
-    return p
 }
 
 /**
@@ -1407,6 +1442,14 @@ export async function help(...helpItems: string[]) {
     } else {
         tabopen(url)
     }
+}
+
+/**
+ * Search through the help pages. Accepts the same flags as [[help]]. Only useful in interactive usage with completions; the command itself is just a wrapper for [[help]].
+ */
+//#background
+export async function apropos(...helpItems: string[]) {
+    help(...helpItems)
 }
 
 /** Start the tutorial
@@ -1714,7 +1757,7 @@ export function urlmodify(mode: "-t" | "-r" | "-s" | "-q" | "-Q" | "-g", ...args
     @hidden
  */
 //#content
-export function geturlsforlinks(reltype = "rel", rel: string) {
+export async function geturlsforlinks(reltype = "rel", rel: string) {
     const elems = document.querySelectorAll("link[" + reltype + "='" + rel + "']")
     if (elems) return Array.prototype.map.call(elems, x => x.href)
     return []
@@ -2795,7 +2838,9 @@ export async function fillcmdline_tmp(ms: number, ...strarr: string[]) {
 }
 
 /**
- * Copy content to clipboard without feedback. Use `clipboard yank` for interactive use.
+ * Copy `content` to clipboard without feedback. Use `clipboard yank` for interactive use.
+ *
+ * e.g. `yank bob` puts "bob" in the clipboard; `composite js document.title | yank` puts the document title in the clipboard.
  */
 //#background
 export function yank(...content: string[]) {
@@ -2909,13 +2954,13 @@ export async function clipboard(excmd: "open" | "yank" | "yankshort" | "yankcano
         case "open":
             url = await getclip()
             if (url) {
-                open(url)
+                open(url.trim())
             }
             break
         case "tabopen":
             url = await getclip()
             if (url) {
-                tabopen(url)
+                tabopen(url.trim())
             }
             break
         case "xselpaste":
@@ -2982,7 +3027,10 @@ export async function taball(id: string) {
  * Examples:
  *  - `command t tabopen`
  *  - `command tn tabnext_gt`
- *  = `command hello t` This will expand recursively into 'hello'->'tabopen'
+ *  - `command hello t` This will expand recursively into 'hello'->'tabopen'
+ *
+ * Commands/aliases are expanded as in a shell, so, given the commands above,
+ * entering `:tn 43` will expand to `:tabnext_gt 43`.
  *
  * Note that this is only for excmd->excmd mappings. To map a normal-mode
  * command to an excommand, see [[bind]].
@@ -3039,7 +3087,7 @@ function parse_bind_args(...args: string[]): bind_args {
     // where it constructs the list of parsers. it should be
     // centralized, possibly as part of rewrite for content-local maps
     // and similar.
-    const mode2maps = new Map([["normal", "nmaps"], ["ignore", "ignoremaps"], ["insert", "imaps"], ["input", "inputmaps"], ["ex", "exmaps"], ["hint", "hintmaps"]])
+    const mode2maps = new Map([["normal", "nmaps"], ["ignore", "ignoremaps"], ["insert", "imaps"], ["input", "inputmaps"], ["ex", "exmaps"], ["hint", "hintmaps"], ["visual", "vmaps"]])
     if (args[0].startsWith("--mode=")) {
         result.mode = args.shift().replace("--mode=", "")
     }
@@ -3120,7 +3168,7 @@ export function bind(...args: string[]) {
 /**
  * Like [[bind]] but for a specific url pattern (also see [[seturl]]).
  *
- * @param pattern Mandatory. The pattern on which the binding should take effect.
+ * @param pattern Mandatory. The regex pattern on which the binding should take effect.
  * @param mode Optional. The mode the binding should be in (e.g. normal, insert, ignore, input). Defaults to normal.
  * @param keys Mandatory. The keys that should be bound.
  * @param excmd Optional. Without it, will display what `keys` are bound to in `mode`.
@@ -3199,7 +3247,7 @@ function validateSetArgs(key: string, values: string[]) {
 /**
  * Usage: `seturl [pattern] key values`
  *
- * @param pattern The URL pattern the setting should be set for, e.g. `en.wikipedia.org` or `/index.html`. Defaults to the current url if `values` is a single word.
+ * @param pattern The URL regex pattern the setting should be set for, e.g. `^https://en.wikipedia.org` or `/index.html`. Defaults to the current url if `values` is a single word.
  * @param key The name of the setting you want to set, e.g. `followpagepatterns.next`
  * @param values The value you wish for, e.g. `next`
  *
@@ -3257,6 +3305,12 @@ export function set(key: string, ...values: string[]) {
         throw "Warning: `noiframeon $url1 $url2` has been deprecated in favor of `:seturl $url1 noiframe true`. The right seturl calls have been made for you but from now on please use `:seturl`."
     }
 
+    if (key === "csp" && values[0] === "clobber") {
+        const msg = "#Error: Mozilla asked us to remove our csp-clobbering code. See https://github.com/tridactyl/tridactyl/issues/1800"
+        fillcmdline_tmp(3000, msg)
+        throw msg
+    }
+
     return config.set(...validateSetArgs(key, values))
 }
 
@@ -3267,7 +3321,7 @@ const AUCMDS = ["DocStart", "DocLoad", "DocEnd", "TriStart", "TabEnter", "TabLef
 
  @param event Curently, 'TriStart', 'DocStart', 'DocLoad', 'DocEnd', 'TabEnter', 'TabLeft', 'FullscreenChange', 'FullscreenEnter', and 'FullscreenLeft' are supported
 
- @param url For DocStart, DocEnd, TabEnter, and TabLeft: a fragment of the URL on which the events will trigger, or a JavaScript regex (e.g, `/www\.amazon\.co.*\/`)
+ @param url For DocStart, DocEnd, TabEnter, and TabLeft: a JavaScript regex (e.g. `www\.amazon\.co.*\`)
 
  We just use [URL.search](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/search).
 
@@ -3287,25 +3341,42 @@ export function autocmd(event: string, url: string, ...excmd: string[]) {
     config.set("autocmds", event, url, excmd.join(" "))
 }
 
-/** Automatically open a domain and all its subdomains in a specified container.
+/**
+ * Automatically open a domain and all its subdomains in a specified container.
  *
- *  For declaring containers that do not yet exist, consider using `auconscreatecontainer true` in your tridactylrc.
- *  This allows tridactyl to automatically create containers from your autocontain directives. Note that they will be random icons and colors.
+ * This function accepts a `-u` flag to treat the pattern as a URL rather than a domain.
+ * For example: `autocontain -u ^https?://[^/]*youtube\.com/ google` is equivalent to `autocontain youtube\.com google`
  *
- * ** NB: This is an experimental feature, if you encounter issues please create an issue on github. **
+ * For declaring containers that do not yet exist, consider using `auconscreatecontainer true` in your tridactylrc.
+ * This allows tridactyl to automatically create containers from your autocontain directives. Note that they will be random icons and colors.
  *
- *  The domain is passed through as a regular expression so there are a few gotchas to be aware of:
- *  * Unescaped periods will match *anything*. `autocontain google.co.uk work` will match `google!co$uk`. Escape your periods or accept that you might get some false positives.
- *  * You can use regex in your domain pattern. `autocontain google\,(co\.uk|com) work` will match either `google.co.uk` or `google.com`.
+ * __NB: This is an experimental feature, if you encounter issues please create an issue on GitHub.__
+ *
+ * The domain is passed through as a regular expression so there are a few gotchas to be aware of:
+ * * Unescaped periods will match *anything*. `autocontain google.co.uk work` will match `google!co$uk`. Escape your periods or accept that you might get some false positives.
+ * * You can use regex in your pattern. `autocontain google\.(co\.uk|com) work` will match either `google.co.uk` or `google.com`.
  *
  * This *should* now peacefully coexist with the Temporary Containers and Multi-Account Containers addons. Do not trust this claim. If a fight starts the participants will try to open infinite tabs. It is *strongly* recommended that you use a tridactylrc so that you can abort a sorceror's-apprentice scenario by killing firefox, commenting out all of autocontainer directives in your rc file, and restarting firefox to clean up the mess. There are a number of strange behaviors resulting from limited coordination between extensions. Redirects can be particularly surprising; for example, with `:autocontain will-redirect.example.org example` set and `will-redirect.example.org` redirecting to `redirected.example.org`, navigating to `will-redirect.example.org` will result in the new tab being in the `example` container under some conditions and in the `firefox-default` container under others.
  *
- *  @param domain The domain which will trigger the autoContain directive. Includes all subdomains.
- *  @param container The container to open the url in.
+ * @param args a regex pattern to match URLs followed by the container to open the URL in.
  */
 //#background
-export function autocontain(domain: string, container: string) {
-    config.set("autocontain", domain, container)
+export function autocontain(...args: string[]) {
+    if (args.length === 0) throw new Error("Invalid autocontain arguments.")
+
+    const urlMode = args[0] === "-u"
+    if (urlMode) {
+        args.splice(0, 1)
+    }
+    if (args.length !== 2) throw new Error("syntax: autocontain [-u] pattern container")
+
+    let [pattern, container] = args
+
+    if (!urlMode) {
+        pattern = `^https?://[^/]*${pattern}/`
+    }
+
+    config.set("autocontain", pattern, container)
 }
 
 /** Remove autocmds
@@ -3354,7 +3425,7 @@ export async function unbind(...args: string[]) {
 /**
  * Unbind a sequence of keys you have set with [[bindurl]]. Note that this **kills** a bind, which means Tridactyl will pass it to the page on `pattern`. If instead you want to use the default setting again, use [[reseturl]].
  *
- * @param pattern the url on which the key should be unbound
+ * @param pattern a regex to match URLs on which the key should be unbound
  * @param mode Optional. The mode in which the key should be unbound. Defaults to normal.
  * @param keys The keybinding that should be unbound
  *
@@ -3388,7 +3459,7 @@ export async function reset(mode: string, key: string) {
 }
 
 /**
- * Restores a sequence of keys to their value in the global config for a specific URL.
+ * Restores a sequence of keys to their value in the global config for a specific URL pattern.
  *
  * See also:
  *  - [[bind]]
@@ -3526,8 +3597,8 @@ export async function quickmark(key: string, ...addressarr: string[]) {
         await bind("go" + key, "open", address)
         await bind("gw" + key, "winopen", address)
     } else {
-        const compstring = addressarr.join(" | tabopen ")
-        const compstringwin = addressarr.join(" | winopen ")
+        const compstring = addressarr.join("; tabopen ")
+        const compstringwin = addressarr.join("; winopen ")
         await bind("gn" + key, "composite tabopen", compstring)
         await bind("go" + key, "composite open", compstring)
         await bind("gw" + key, "composite winopen", compstringwin)
@@ -3585,11 +3656,11 @@ export function viewconfig(key?: string) {
                 .replace(/#/g, "%23")
                 .replace(/ /g, "%20")
     }
-        window.location.href =
-            "data:application/json," +
-            JSON.stringify(config.getDynamic(key))
-                .replace(/#/g, "%23")
-                .replace(/ /g, "%20")
+    window.location.href =
+        "data:application/json," +
+        JSON.stringify(config.getDynamic(key))
+            .replace(/#/g, "%23")
+            .replace(/ /g, "%20")
     // base 64 encoding is a cleverer way of doing this, but it doesn't seem to work for the whole config.
     //window.location.href = "data:application/json;base64," + btoa(JSON.stringify(config.get()))
 }
@@ -3638,6 +3709,7 @@ export function unset(...keys: string[]) {
         - -b open in background
         - -y copy (yank) link's target to clipboard
         - -p copy an element's text to the clipboard
+        - -h select an element (as if you click-n-dragged over it)
         - -P copy an element's title/alt text to the clipboard
         - -r read an element's text with text-to-speech
         - -i view an image
@@ -3704,6 +3776,12 @@ export async function hint(option?: string, selectors?: string, ...rest: string[
         option = option.slice(0, pipeIndex) + option.slice(pipeIndex + 1)
     }
 
+    // Hacky fix for #1374 - join rapid-hinted yanks
+    if (option === "-qy") {
+        run_exstr('composite hint -qpipe a href | js -p JS_ARG.join(" ") | yank')
+        return
+    }
+
     const options = new Set(option.length ? option.slice(1).split("") : [])
     const rapid = options.delete("q")
     const jshints = !options.delete("J")
@@ -3732,12 +3810,12 @@ export async function hint(option?: string, selectors?: string, ...rest: string[
     }
 
     switch (option) {
-        case "-f":  // Filter links by text
+        case "-f": // Filter links by text
         case "-fr": // Filter links by regex
             let match: string | RegExp
             match = [selectors, ...rest].join(" ")
-            if ( option == "-fr" ) {
-                match = new RegExp (match);
+            if (option == "-fr") {
+                match = new RegExp(match)
             }
             selectHints = hinting.pipe_elements(
                 hinting.hintByText(match),
@@ -3786,7 +3864,23 @@ export async function hint(option?: string, selectors?: string, ...rest: string[
                 DOM.elementsWithText(),
                 elem => {
                     // /!\ Warning: This is racy! This can easily be fixed by adding an await but do we want this? yank can be pretty slow, especially with yankto=selection
-                    run_exstr("yank " + elem.textContent)
+                    yank(elem.textContent)
+                    return elem
+                },
+                rapid,
+            )
+            break
+
+        case "-h":
+            // Highlight element
+            selectHints = hinting.pipe_elements(
+                DOM.elementsWithText(),
+                elem => {
+                    const r = document.createRange()
+                    r.setStart(elem, 0)
+                    r.setEnd(elem, 1)
+                    const s = document.getSelection()
+                    s.addRange(r)
                     return elem
                 },
                 rapid,
@@ -3903,7 +3997,7 @@ export async function hint(option?: string, selectors?: string, ...rest: string[
             selectHints = hinting.pipe_elements(
                 elems,
                 elem => {
-                    Messaging.message("download_background", "downloadUrl", [new URL(elem[attr], window.location.href).href, saveAs])
+                    Messaging.message("download_background", "downloadUrl", new URL(elem[attr], window.location.href).href, saveAs)
                     return elem
                 },
                 rapid,
@@ -4001,17 +4095,11 @@ export async function hint(option?: string, selectors?: string, ...rest: string[
 //#content
 export function rot13(n: number) {
     if (n === undefined) n = 13
-    const body = document.createTreeWalker(
-        document.body,
-        NodeFilter.SHOW_TEXT,
-        { acceptNode:
-            (node) => NodeFilter.FILTER_ACCEPT
-        }
-    )
+    const body = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode: node => NodeFilter.FILTER_ACCEPT })
 
     while (body.nextNode()) {
         const t = body.currentNode.textContent
-       body.currentNode.textContent = rot13_helper(t, n)
+        body.currentNode.textContent = rot13_helper(t, n)
     }
 }
 /**
@@ -4021,7 +4109,7 @@ export function rot13(n: number) {
  */
 //#content
 export function run_exstr(...commands: string[]) {
-    return Messaging.message("controller_background", "acceptExCmd", commands)
+    return Messaging.message("controller_background", "acceptExCmd", commands.join(""))
 }
 
 // }}}
@@ -4199,14 +4287,17 @@ export async function perfhistogram(...filters: string[]) {
  */
 //#background
 export async function bmark(url?: string, ...titlearr: string[]) {
-    const auto_url = (url == undefined)
-    url = url === undefined ? (await activeTab()).url : (_ => {
-        try {
-            return (new URL(url).href)
-        } catch (e) {
-            return (new URL("http://" + url).href)
-        }
-    })()
+    const auto_url = url == undefined
+    url =
+        url === undefined
+            ? (await activeTab()).url
+            : (_ => {
+                  try {
+                      return new URL(url).href
+                  } catch (e) {
+                      return new URL("http://" + url).href
+                  }
+              })()
     let title = titlearr.join(" ")
     // if titlearr is given and we have duplicates, we probably want to give an error here.
     const dupbmarks = await browser.bookmarks.search({ url })
@@ -4227,10 +4318,12 @@ export async function bmark(url?: string, ...titlearr: string[]) {
         const treeClimber = (tree, treestr) => {
             if (tree.type !== "folder") return {}
             treestr += tree.title + "/"
-            if (!("children" in tree) || tree.children.length === 0) return { path: treestr, id: tree.id }
+            if (!("children" in tree) || tree.children.length === 0) return [{ path: treestr, id: tree.id }]
             return [{ path: treestr, id: tree.id }, tree.children.map(child => treeClimber(child, treestr))]
         }
-        const validpaths = flatten(treeClimber(tree, "")).filter(x => "path" in x)
+        const treeClimberResult = treeClimber(tree, "")
+        let validpaths = []
+        if (treeClimberResult instanceof Array) validpaths = treeClimberResult.flat(Infinity).filter(x => "path" in x)
         title = title.substring(title.lastIndexOf("/") + 1)
         let pathobj = validpaths.find(p => p.path === path)
         // If strict look doesn't find it, be a bit gentler
@@ -4309,15 +4402,15 @@ export async function issue() {
         logger.warning("issue(): Couldn't find textarea element in github issue page.")
         return
     }
-    let template = await (fetch(browser.runtime.getURL("issue_template.md"))
+    let template = await fetch(browser.runtime.getURL("issue_template.md"))
         .then(resp => resp.body.getReader())
         .then(reader => reader.read())
-        .then(r => (new TextDecoder("utf-8")).decode(r.value)))
+        .then(r => new TextDecoder("utf-8").decode(r.value))
     if (textarea.value !== template) {
         logger.debug("issue(): Textarea value differs from template, exiting early.")
         return
     }
-    const platform = await browserBg.runtime.getPlatformInfo();
+    const platform = await browserBg.runtime.getPlatformInfo()
     // Remove the bit asking the user
     template = template.replace("*   Operating system:\n", "")
     // Add this piece of information to the top of the template
@@ -4368,13 +4461,11 @@ export async function updatecheck(source: "manual" | "auto_polite" | "auto_impol
     if (source == "manual") {
         notify()
     } else if (source == "auto_impolite") {
-        logger.debug("Impolitely nagging user to update. Installed, latest: ",
-                     Updates.getInstalledVersion(), highestKnownVersion)
+        logger.debug("Impolitely nagging user to update. Installed, latest: ", Updates.getInstalledVersion(), highestKnownVersion)
         notify()
         Updates.updateLatestNaggedVersion(highestKnownVersion)
     } else if (source == "auto_polite" && !Updates.naggedForVersion(highestKnownVersion)) {
-        logger.debug("Politely nagging user to update. Installed, latest: ",
-                     Updates.getInstalledVersion(), highestKnownVersion)
+        logger.debug("Politely nagging user to update. Installed, latest: ", Updates.getInstalledVersion(), highestKnownVersion)
         notify()
         Updates.updateLatestNaggedVersion(highestKnownVersion)
     }
@@ -4408,5 +4499,17 @@ browser.runtime.onInstalled.addListener(details => {
     else if ((details as any).temporary !== true && details.reason === "update") updatenative(false)
     // could add elif "update" and show a changelog. Hide it behind a setting to make it less annoying?
 })
+
+/** Opens optionsUrl for the selected extension in a popup window.
+ *
+ * NB: Tridactyl cannot run on this page!
+ */
+//#background
+export async function extoptions(...optionNameArgs: string[]) {
+    const optionName = optionNameArgs.join(" ")
+    const extensions = await Extensions.listExtensions()
+    const selectedExtension = extensions.find(ext => ext.name === optionName)
+    return winopen("-popup", selectedExtension.optionsUrl)
+}
 
 // vim: tabstop=4 shiftwidth=4 expandtab

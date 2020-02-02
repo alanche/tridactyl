@@ -139,6 +139,8 @@ import * as native from "@src/lib/native"
 import * as styling from "@src/content/styling"
 import { EditorCmds as editor } from "@src/content/editor"
 import * as updates from "@src/lib/updates"
+import * as urlutils from "@src/lib/url_util"
+import * as scrolling from "@src/content/scrolling"
 /* tslint:disable:import-spacing */
 ; (window as any).tri = Object.assign(Object.create(null), {
     browserBg: webext.browserBg,
@@ -156,6 +158,7 @@ import * as updates from "@src/lib/updates"
     keyseq,
     messaging,
     state,
+    scrolling,
     webext,
     l: prom => prom.then(console.log).catch(console.error),
     native,
@@ -163,6 +166,7 @@ import * as updates from "@src/lib/updates"
     contentLocation: window.location,
     perf,
     updates,
+    urlutils,
 })
 
 logger.info("Loaded commandline content?", commandline_content)
@@ -229,7 +233,7 @@ config.getAsync("modeindicator").then(mode => {
             .then(container => {
                 statusIndicator.setAttribute(
                     "style",
-                    `border: ${container.colorCode} solid 1.5px !important`,
+                    `border: ${(container as any).colorCode} solid 1.5px !important`,
                 )
             })
             .catch(error => {
@@ -350,6 +354,18 @@ config.getAsync("leavegithubalone").then(v => {
         window.addEventListener("DOMContentLoaded", () => {
             document.body.addEventListener("keydown", protectSlash)
         })
+    }
+})
+
+document.addEventListener("selectionchange", () => {
+    const selection = document.getSelection()
+    if ((contentState.mode == "visual") && (config.get("visualexitauto") == "true") && (selection.anchorOffset == selection.focusOffset)) {
+        contentState.mode = "normal"
+        return
+    }
+    if ((contentState.mode !== "normal") || (config.get("visualenterauto") == "false")) return
+    if (selection.anchorOffset !== selection.focusOffset) {
+        contentState.mode = "visual"
     }
 })
 

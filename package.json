@@ -4,82 +4,60 @@
   "description": "Vimperator/Pentadactyl successor",
   "dependencies": {
     "@types/css": "0.0.31",
-    "@types/nearley": "^2.11.0",
+    "@types/nearley": "^2.11.1",
     "command-line-args": "^5.1.1",
     "csp-serdes": "github:cmcaine/csp-serdes",
     "css": "^2.2.4",
     "flyd": "^0.2.8",
-    "fuse.js": "^3.4.5",
-    "immer": "^3.2.0",
+    "fuse.js": "^3.4.6",
+    "immer": "^5.3.2",
     "mark.js": "^8.11.1",
     "mithril": "^2.0.4",
-    "rss-parser": "^3.7.2",
-    "semver-compare": "^1.0.0"
+    "rss-parser": "^3.7.4",
+    "semver-compare": "^1.0.0",
+    "typedoc-default-themes": "^0.7.2"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.18",
-    "@types/mithril": "^2.0.0",
-    "@types/node": "^12.7.2",
-    "awesome-typescript-loader": "^5.2.1",
+    "@types/jest": "^25.1.1",
+    "@types/mithril": "^2.0.2",
+    "@types/node": "^13.5.3",
+    "@types/selenium-webdriver": "^4.0.6",
     "cleanslate": "^0.10.1",
-    "copy-webpack-plugin": "^5.0.4",
-    "geckodriver": "^1.16.2",
-    "jest": "^24.9.0",
-    "marked": "^0.7.0",
-    "nearley": "^2.18.0",
-    "prettier": "^1.17.1",
-    "selenium-webdriver": "^4.0.0-alpha.4",
+    "copy-webpack-plugin": "^5.1.1",
+    "geckodriver": "^1.19.1",
+    "jest": "^25.1.0",
+    "marked": "^0.8.0",
+    "nearley": "^2.19.1",
+    "prettier": "^1.19.1",
+    "selenium-webdriver": "^4.0.0-alpha.5",
     "shared-git-hooks": "^1.2.1",
     "source-map-loader": "^0.2.4",
-    "ts-jest": "^24.0.2",
-    "ts-node": "^8.3.0",
-    "tslint": "^5.19.0",
-    "tslint-etc": "^1.6.0",
+    "ts-jest": "^25.0.0",
+    "ts-loader": "^6.2.1",
+    "ts-node": "^8.6.2",
+    "tsconfig-paths-webpack-plugin": "^3.2.0",
+    "tslint": "^5.20.1",
+    "tslint-etc": "^1.10.0",
     "tslint-sonarts": "^1.9.0",
-    "typedoc": "^0.15.0",
-    "typedoc-default-themes": "git://github.com/tridactyl/typedoc-default-themes.git#fix_weird_member_names_bin",
-    "typescript": "^3.5.3",
+    "typedoc": "^0.16.9",
+    "typescript": "^3.7.5",
     "uglify-es": "^3.3.9",
     "uglifyjs-webpack-plugin": "^2.2.0",
-    "web-ext": "^3.1.1",
+    "web-ext": "^4.0.0",
     "web-ext-types": "^3.2.1",
-    "webpack": "^4.39.2",
-    "webpack-cli": "^3.3.7"
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
   },
   "scripts": {
     "build": "sh scripts/build.sh",
     "run": "web-ext run -s build/ -u 'txti.es'",
+    "forrest-run": "yarn run run",
     "watch": "echo 'watch is broken, use build instead'; exit 0;",
     "clean": "rm -rf build generated",
     "test": "yarn run build && rm -rf web-ext-artifacts/* && web-ext build --source-dir ./build --overwrite-dest && mv web-ext-artifacts/*.zip web-ext-artifacts/tridactyl.xpi && jest --silent",
     "update-buildsystem": "rm -rf src/node_modules; yarn run clean",
     "lint": "bash hooks/pre-commit",
     "pretty": "bash scripts/pretty.sh"
-  },
-  "jest": {
-    "transform": {
-      "^.+\\.tsx?$": "ts-jest"
-    },
-    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js",
-      "jsx",
-      "json"
-    ],
-    "moduleNameMapper": {
-      "@src/(.*)": "<rootDir>/src/$1"
-    },
-    "globals": {
-      "ts-jest": {
-        "diagnostics": {
-          "ignoreCodes": [
-            151001
-          ]
-        }
-      }
-    }
   },
   "author": "Colin Caine",
   "repository": {

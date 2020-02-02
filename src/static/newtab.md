@@ -4,13 +4,13 @@
 
 Tridactyl has to override your new tab page due to WebExtension limitations. You can learn how to change it at the bottom of the page, otherwise please read on for some tips and tricks.
 
--   **Tridactyl might die on/after August 21**: We have found ourselves in a disagreement with Mozilla's add-on reviewers, who now "reserve the right to start blocking \[Tridactyl\] after August 21". Please see [this issue](https://github.com/tridactyl/tridactyl/issues/1800) for more information.
+-   **Upcoming userChrome breakage** Firefox 72 requires that `@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");` is not in your `userChrome.css`. You will need to remove that line manually from chrome/userChrome.css if you have either created that file manually or used `guiset`. You can find your profile folder on `about:support`.
 
--   You can view the main help page by typing [`:help`][help], and access the tutorial with [`:tutor`][tutor].
+-   You can view the main help page by typing [`:help`][help], and access the tutorial with [`:tutor`][tutor]. There's a [wiki](https://github.com/tridactyl/tridactyl/wiki) too - feel free to add to it. You may find `:apropos` useful for finding relevant settings and commands.
 
 -   You can view your current configuration with `:viewconfig`.
 
--   Tridactyl retreat 👀: 4 of the core Tridactyl developers met up in the real world to work on Tridactyl from 24th May - 1st June in the Peak District, UK. [Donate using this link](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7JQHV4N2YZCTY) if you'd like to contribute to our travel, accommodation and subsistence costs, which costed about £2,300. As of August 14th, we have so far raised ~£1000, so thanks to all of you who have donated.
+-   Tridactyl retreat 👀: 4 of the core Tridactyl developers met up in the real world to work on Tridactyl from 24th May - 1st June in the Peak District, UK. [Donate using this link](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7JQHV4N2YZCTY), or _new_ via [GitHub sponsors](https://github.com/users/bovine3dom/sponsorship) who will double your donation and take zero fees, if you'd like to contribute to our travel, accommodation and subsistence costs, which came to about £2,300. As of October 7th, we have so far raised ~£1500, so thanks to all of you who have donated.
 
 *   If Tridactyl breaks a website or is broken by a website, trying the steps in the [troubleshooting guide](https://github.com/tridactyl/tridactyl/blob/master/doc/troubleshooting.md) might help.
 
@@ -64,14 +64,9 @@ Alternatively, if you don't need Tridactyl to work on the new tab page, you can 
 
 ## FAQ
 
-You have more questions? Have a look at our [FAQ][faq-link].
+You have more questions? Have a look at our [FAQ][faq-link] or search our [issues][issues].
 
-[1]: https://github.com/tridactyl/tridactyl/issues
-
-<div class="align-left">
-[1]: https://github.com/tridactyl/tridactyl/issues<br />
-</div>
-
+[issues]: https://github.com/tridactyl/tridactyl/issues
 [faq-link]: https://github.com/tridactyl/tridactyl#frequently-asked-questions
 [help]: /static/docs/modules/_src_excmds_.html
 [tutor]: /static/clippy/1-tutor.html

@@ -103,8 +103,8 @@ export class default_config {
      */
     ignoremaps = {
         "<S-Insert>": "mode normal",
-        "<CA-Escape>": "mode normal",
-        "<CA-`>": "mode normal",
+        "<AC-Escape>": "mode normal",
+        "<AC-`>": "mode normal",
         "<S-Escape>": "mode normal",
         "<C-^>": "tab #",
         "<C-6>": "tab #",
@@ -121,8 +121,8 @@ export class default_config {
         "<Escape>": "composite unfocus | mode normal",
         "<C-[>": "composite unfocus | mode normal",
         "<C-i>": "editor",
-        "<CA-Escape>": "mode normal",
-        "<CA-`>": "mode normal",
+        "<AC-Escape>": "mode normal",
+        "<AC-`>": "mode normal",
         "<C-6>": "tab #",
         "<C-^>": "tab #",
         "<S-Escape>": "mode ignore",
@@ -135,10 +135,18 @@ export class default_config {
      *
      * They consist of key sequences mapped to ex commands.
      */
-    inputmaps = mergeDeep(this.imaps, {
+    inputmaps = {
         "<Tab>": "focusinput -n",
         "<S-Tab>": "focusinput -N",
-    })
+        /**
+         * Config objects with this key inherit their keys from the object specified.
+         *
+         * Only supports "root" objects. Subconfigs (`seturl`) work as expected.
+         *
+         * Here, this means that input mode is the same as insert mode except it has added binds for tab and shift-tab.
+         */
+        "🕷🕷INHERITS🕷🕷": "imaps",
+    }
 
     /**
      * nmaps contain all of the bindings for "normal mode".
@@ -233,7 +241,7 @@ export class default_config {
         ZZ: "qall",
         f: "hint",
         F: "hint -b",
-        gF: "hint -br",
+        gF: "hint -qb",
         ";i": "hint -i",
         ";b": "hint -b",
         ";o": "hint",
@@ -241,6 +249,8 @@ export class default_config {
         ";k": "hint -k",
         ";y": "hint -y",
         ";p": "hint -p",
+        ";h": "hint -h",
+        "v": "hint -h", // Easiest way of entering visual mode for now. Expect this bind to change
         ";P": "hint -P",
         ";r": "hint -r",
         ";s": "hint -s",
@@ -276,9 +286,13 @@ export class default_config {
         ";gv": "hint -qW mpvsafe",
         ";gw": "hint -qw",
         ";gb": "hint -qb",
+        // These two don't strictly follow the "bind is ;g[flag]" rule but they make sense
+        ";gF": "hint -qb",
+        ";gf": "hint -q",
+
         "<S-Insert>": "mode ignore",
-        "<CA-Escape>": "mode ignore",
-        "<CA-`>": "mode ignore",
+        "<AC-Escape>": "mode ignore",
+        "<AC-`>": "mode ignore",
         "<S-Escape>": "mode ignore",
         "<Escape>": "composite mode normal ; hidecmdline",
         "<C-[>": "composite mode normal ; hidecmdline",
@@ -294,15 +308,34 @@ export class default_config {
         zI: "zoom 3",
         zO: "zoom 0.3",
         ".": "repeat",
-        "<SA-ArrowUp><SA-ArrowUp><SA-ArrowDown><SA-ArrowDown><SA-ArrowLeft><SA-ArrowRight><SA-ArrowLeft><SA-ArrowRight>ba":
+        "<AS-ArrowUp><AS-ArrowUp><AS-ArrowDown><AS-ArrowDown><AS-ArrowLeft><AS-ArrowRight><AS-ArrowLeft><AS-ArrowRight>ba":
             "open https://www.youtube.com/watch?v=M3iOROuTuMA",
+    }
+
+    vmaps = {
+        "<Escape>": "composite js document.getSelection().empty(); mode normal; hidecmdline",
+        "<C-[>": "composite js document.getSelection().empty(); mode normal ; hidecmdline",
+        "y": "composite js document.getSelection().toString() | clipboard yank",
+        "s": "composite js document.getSelection().toString() | fillcmdline open search",
+        "S": "composite js document.getSelection().toString() | fillcmdline tabopen search",
+        "l": 'js document.getSelection().modify("extend","forward","character")',
+        "h": 'js document.getSelection().modify("extend","backward","character")',
+        "e": 'js document.getSelection().modify("extend","forward","word")',
+        "w": 'js document.getSelection().modify("extend","forward","word"); document.getSelection().modify("extend","forward","character")',
+        "b": 'js document.getSelection().modify("extend","backward","character"); document.getSelection().modify("extend","backward","word"); document.getSelection().modify("extend","forward","character")',
+        "j": 'js document.getSelection().modify("extend","forward","line")',
+        // "j": 'js document.getSelection().modify("extend","forward","paragraph")', // not implemented in Firefox
+        "k": 'js document.getSelection().modify("extend","backward","line")',
+        "$": 'js document.getSelection().modify("extend","forward","lineboundary")',
+        "0": 'js document.getSelection().modify("extend","backward","lineboundary")',
+        "🕷🕷INHERITS🕷🕷": "nmaps",
     }
 
     hintmaps = {
         "<Backspace>": "hint.popKey",
         "<Escape>": "hint.reset",
-        "<Tab>": "hint.focusPreviousHint",
-        "<S-Tab>": "hint.focusNextHint",
+        "<Tab>": "hint.focusNextHint",
+        "<S-Tab>": "hint.focusPreviousHint",
         "<ArrowUp>": "hint.focusTopHint",
         "<ArrowDown>": "hint.focusBottomHint",
         "<ArrowLeft>": "hint.focusLeftHint",
@@ -436,6 +469,13 @@ export class default_config {
     })
 
     /**
+     * Strict mode will always ensure a domain is open in the correct container, replacing the current tab if necessary.
+     *
+     * Relaxed mode is less aggressive and instead treats container domains as a default when opening a new tab.
+     */
+    autocontainmode: "strict" | "relaxed" = "strict"
+
+    /**
      * Aliases for the commandline.
      *
      * You can make a new one with `command alias ex-command`.
@@ -505,6 +545,11 @@ export class default_config {
         "mkt!": "mktridactylrc -f",
         "mktridactylrc!": "mktridactylrc -f",
         mpvsafe: "js -p tri.excmds.shellescape(JS_ARG).then(url => tri.excmds.exclaim_quiet('mpv ' + url))",
+        exto: "extoptions",
+        extpreferences: "extoptions",
+        extp: "extpreferences",
+        prefset: "setpref",
+        prefremove: "removepref",
     }
 
     /**
@@ -644,6 +689,11 @@ export class default_config {
      * Where to open tabs opened with `tabopen` - to the right of the current tab, or at the end of the tabs.
      */
     tabopenpos: "next" | "last" = "next"
+
+    /**
+     * Controls which tab order to use when opening the tab/buffer list. Either mru = sort by most recent tab or default = by tab index
+     */
+    tabsort: "mru" | "default" = "default"
 
     /**
      * Where to open tabs opened with hinting - as if it had been middle clicked, to the right of the current tab, or at the end of the tabs.
@@ -893,6 +943,7 @@ export class default_config {
     minincsearchlen = 3
 
     /**
+     * Deprecated.
      * Change this to "clobber" to ruin the "Content Security Policy" of all sites a bit and make Tridactyl run a bit better on some of them, e.g. raw.github*
      */
     csp: "untouched" | "clobber" = "untouched"
@@ -939,6 +990,16 @@ export class default_config {
      * gu (or other means).
      */
     urlparenttrailingslash: "true" | "false" = "true"
+
+    /**
+     * Whether to enter visual mode when text is selected. Visual mode can always be entered with `:mode visual`.
+     */
+    visualenterauto: "true" | "false" = "true"
+
+    /**
+     * Whether to return to visual mode when text is deselected.
+     */
+    visualexitauto: "true" | "false" = "true"
 }
 
 /** @hidden */
@@ -951,9 +1012,18 @@ const DEFAULTS = o(new default_config())
  */
 function getDeepProperty(obj, target: string[]) {
     if (obj !== undefined && target.length) {
-        return getDeepProperty(obj[target[0]], target.slice(1))
+        if (obj["🕷🕷INHERITS🕷🕷"] === undefined)  {
+            return getDeepProperty(obj[target[0]], target.slice(1))
+        } else {
+            return getDeepProperty(mergeDeep(get(obj["🕷🕷INHERITS🕷🕷"]), obj)[target[0]], target.slice(1))
+        }
     } else {
-        return obj
+        if (obj === undefined) return obj
+        if (obj["🕷🕷INHERITS🕷🕷"] !== undefined) {
+            return mergeDeep(get(obj["🕷🕷INHERITS🕷🕷"]), obj)
+        } else {
+            return obj
+        }
     }
 }
 
@@ -1098,6 +1168,18 @@ export async function getAsync(
     ...target: string[]
 ) {
     if (INITIALISED) {
+        // TODO: consider storing keys directly
+        let browserconfig
+        switch (get("storageloc")) {
+            case "local":
+                browserconfig = await browser.storage.local.get(CONFIGNAME)
+                break
+            case "sync":
+                browserconfig = await browser.storage.sync.get(CONFIGNAME)
+                break
+        }
+        USERCONFIG = browserconfig[CONFIGNAME] || o({})
+
         return get(target_typed, ...target)
     } else {
         return new Promise(resolve =>
@@ -1121,7 +1203,7 @@ export function setURL(pattern, ...args) {
 
     @hidden
  */
-export function set(...args) {
+export async function set(...args) {
     if (args.length < 2) {
         throw "You must provide at least two arguments!"
     }
@@ -1129,8 +1211,20 @@ export function set(...args) {
     const target = args.slice(0, args.length - 1)
     const value = args[args.length - 1]
 
-    setDeepProperty(USERCONFIG, value, target)
-    return save()
+    if (INITIALISED) {
+        // wait for storage to settle, otherwise we could clobber a previous incomplete set()
+        const previousValue = await getAsyncDynamic(...target)
+
+        setDeepProperty(USERCONFIG, value, target)
+
+        if (target.length === 1 && target[0] === "storageloc" && previousValue !== value) {
+          // ensure storageloc is saved locally before switching
+          await save(previousValue)
+        }
+        return save()
+    } else {
+        setDeepProperty(USERCONFIG, value, target)
+    }
 }
 
 /** @hidden
@@ -1323,6 +1417,16 @@ export async function update() {
             )
             set("configversion", "1.7")
         },
+        "1.7": () => {
+            const autocontain = getDeepProperty(USERCONFIG, ["autocontain"])
+            unset("autocontain")
+            if (autocontain !== undefined) {
+              Object.entries(autocontain).forEach(([domain, container]) => {
+                set("autocontain", `^https?://[^/]*${domain}/`, container)
+              })
+            }
+            set("configversion", "1.8")
+        },
     }
     if (!get("configversion")) set("configversion", "0.0")
     const updatetest = v => {
@@ -1339,13 +1443,20 @@ export async function update() {
     @hidden
  */
 async function init() {
-    const syncConfig = await browser.storage.sync.get(CONFIGNAME)
-    schlepp(syncConfig[CONFIGNAME])
-    // Local storage overrides sync
     const localConfig = await browser.storage.local.get(CONFIGNAME)
-    schlepp(localConfig[CONFIGNAME])
+
+    if (localConfig === undefined || localConfig.storageloc !== "local") {
+        const syncConfig = await browser.storage.sync.get(CONFIGNAME)
+        if (syncConfig !== undefined) {
+          schlepp(syncConfig[CONFIGNAME])
+        }
+    } else {
+        // These could be merged instead, but the current design does not allow for that
+        schlepp(localConfig[CONFIGNAME])
+    }
 
     await update()
+    await save()
     INITIALISED = true
     for (const waiter of WAITERS) {
         waiter()
@@ -1427,7 +1538,7 @@ export function parseConfig(): string {
     if (p.logging.length > 0)
         s.logging = `" Logging\n${p.logging.join("\n")}\n\n`
 
-    const ftdetect = `" vim: set filetype=vim:`
+    const ftdetect = `" For syntax highlighting see https://github.com/tridactyl/vim-tridactyl\n" vim: set filetype=tridactyl`
 
     return `${s.general}${s.binds}${s.subconfigs}${s.aliases}${s.aucmds}${
         s.aucons
@@ -1531,58 +1642,63 @@ const parseConfigHelper = (pconf, parseobj) => {
 
 // Listen for changes to the storage and update the USERCONFIG if appropriate.
 // TODO: BUG! Sync and local storage are merged at startup, but not by this thing.
-browser.storage.onChanged.addListener(async (changes, areaname) => {
+browser.storage.onChanged.addListener((changes, areaname) => {
     if (CONFIGNAME in changes) {
-        const defaultConf = new default_config()
-        const old = USERCONFIG
+        const { newValue, oldValue } = changes[CONFIGNAME]
+        const old = oldValue || {}
 
-        function triggerChangeListeners(key) {
+        function triggerChangeListeners(key, value = newValue[key]) {
             const arr = changeListeners.get(key)
             if (arr) {
-                const v = old[key] === undefined ? defaultConf[key] : old[key]
-                arr.forEach(f => f(v, USERCONFIG[key]))
+                const v = old[key] === undefined ? DEFAULTS[key] : old[key]
+                arr.forEach(f => f(v, value))
             }
         }
 
-        // newValue is undefined when calling browser.storage.AREANAME.clear()
-        if (changes[CONFIGNAME].newValue !== undefined) {
+        if (areaname === "sync" && areaname !== get("storageloc")) {
+            // storageloc=local means ignoring changes that aren't set by us
+        } else if (newValue !== undefined) {
+            if (areaname === "sync") {
+              // prevent storageloc from being set remotely
+              delete old.storageloc
+              delete newValue.storageloc
+            }
+
             // A key has been :unset if it exists in USERCONFIG and doesn't in changes and if its value in USERCONFIG is different from the one it has in default_config
-            const unsetKeys = Object.keys(USERCONFIG).filter(
+            const unsetKeys = Object.keys(old).filter(
                 k =>
-                    changes[CONFIGNAME].newValue[k] === undefined &&
-                    JSON.stringify(USERCONFIG[k]) !==
-                        JSON.stringify(defaultConf[k]),
+                    newValue[k] === undefined &&
+                    JSON.stringify(old[k]) !==
+                        JSON.stringify(DEFAULTS[k]),
             )
 
             // A key has changed if it is defined in USERCONFIG and its value in USERCONFIG is different from the one in `changes` or if the value in defaultConf is different from the one in `changes`
             const changedKeys = Object.keys(
-                changes[CONFIGNAME].newValue,
+                newValue,
             ).filter(
                 k =>
                     JSON.stringify(
-                        USERCONFIG[k] !== undefined
-                            ? USERCONFIG[k]
-                            : defaultConf[k],
-                    ) !== JSON.stringify(changes[CONFIGNAME].newValue[k]),
+                        old[k] !== undefined
+                            ? old[k]
+                            : DEFAULTS[k],
+                    ) !== JSON.stringify(newValue[k]),
             )
 
-            USERCONFIG = changes[CONFIGNAME].newValue
+            // TODO: this should be a deep comparison but this is better than nothing
+            changedKeys.forEach(key => USERCONFIG[key] = newValue[key])
+            unsetKeys.forEach(key => delete USERCONFIG[key])
 
             // Trigger listeners
-            unsetKeys.forEach(key => {
-                const arr = changeListeners.get(key)
-                if (arr) {
-                    arr.forEach(f => f(old[key], defaultConf[key]))
-                }
-            })
+            unsetKeys.forEach(key => triggerChangeListeners(key, DEFAULTS[key]))
 
             changedKeys.forEach(key => triggerChangeListeners(key))
-        } else if (areaname === (await get("storageloc"))) {
+        } else {
+            // newValue is undefined when calling browser.storage.AREANAME.clear()
             // If newValue is undefined and AREANAME is the same value as STORAGELOC, the user wants to clean their config
             USERCONFIG = o({})
 
             Object.keys(old)
-                .filter(key => old[key] !== defaultConf[key])
+                .filter(key => old[key] !== DEFAULTS[key])
                 .forEach(key => triggerChangeListeners(key))
         }
     }

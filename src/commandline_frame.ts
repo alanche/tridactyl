@@ -27,12 +27,14 @@ import { ExcmdCompletionSource } from "@src/completions/Excmd"
 import { FileSystemCompletionSource } from "@src/completions/FileSystem"
 import { GuisetCompletionSource } from "@src/completions/Guiset"
 import { HelpCompletionSource } from "@src/completions/Help"
+import { AproposCompletionSource } from "@src/completions/Apropos"
 import { HistoryCompletionSource } from "@src/completions/History"
 import { PreferenceCompletionSource } from "@src/completions/Preferences"
 import { RssCompletionSource } from "@src/completions/Rss"
 import { SessionsCompletionSource } from "@src/completions/Sessions"
 import { SettingsCompletionSource } from "@src/completions/Settings"
 import { WindowCompletionSource } from "@src/completions/Window"
+import { ExtensionsCompletionSource } from "@src/completions/Extensions"
 import * as Messaging from "@src/lib/messaging"
 import "@src/lib/number.clamp"
 import state from "@src/state"
@@ -63,7 +65,7 @@ const commandline_state = {
      * tl;dr TODO: delete this and better resolve race condition
      */
     isVisible: false,
-    keyEvents: [],
+    keyEvents: new Array<KeyEventLike>(),
     refresh_completions,
     state,
 }
@@ -107,12 +109,14 @@ export function enableCompletions() {
             FileSystemCompletionSource,
             GuisetCompletionSource,
             HelpCompletionSource,
+            AproposCompletionSource,
             HistoryCompletionSource,
             PreferenceCompletionSource,
             RssCompletionSource,
             SessionsCompletionSource,
             SettingsCompletionSource,
             WindowCompletionSource,
+            ExtensionsCompletionSource,
         ]
             .map(constructorr => {
                 try {
@@ -367,6 +371,7 @@ import * as SELF from "@src/commandline_frame"
 Messaging.addListener("commandline_frame", Messaging.attributeCaller(SELF))
 
 import { getCommandlineFns } from "@src/lib/commandline_cmds"
+import { KeyEventLike } from "./lib/keyseq"
 commandline_state.fns = getCommandlineFns(commandline_state)
 Messaging.addListener("commandline_cmd", Messaging.attributeCaller(commandline_state.fns))
 
